@@ -1,0 +1,64 @@
+{
+  "asset": {
+    "asset_type": "laptop",
+    "nama_asset": "laptop1",
+    "kode_asset": "laptop1",
+    "serial_number": "PS1922HT",
+    "spesifikasi": "Up to AMD Ryzen™ 7 7730U",
+    "tgl_pengadaan": "2025-02-18",
+    "harga": "15000000",
+    "deskripsi": "bagus",
+    "klasifikasi": "vital",
+    "lokasi": "Yogyakarta",
+    "status": "Tersedia",
+    "image": [
+      {
+        "added": [
+          {
+          }
+        ],
+        "deleted": [
+          {
+          }
+        ],
+        "img": [
+          {
+          }
+        ]
+      }
+    ]
+  },
+  "pic": {
+    "added": [
+      {
+        "nama_pic": "IT Support",
+        "keterangan": "PIC 1",
+        "start_at": "2025-02-18",
+        "ended_at": "2025-02-29"
+      }
+    ],
+    "pics": [
+      {
+        "pic_uuid": "facfabe0-9fff-463e-9a3e-0ae7fc2418a0",
+        "nama_pic": "IT Support",
+        "keterangan": "PIC 1",
+        "start_at": "2025-02-18",
+        "ended_at": "2025-02-29"
+      }
+    ],
+    "updated": [
+      {
+        "pic_uuid": "facfabe0-9fff-463e-9a3e-0ae7fc2418a0",
+        "nama_pic": "IT Support",
+        "keterangan": "PIC 1",
+        "start_at": "2025-02-18",
+        "ended_at": "2025-02-29"
+      }
+    ],
+    "deleted": [
+      {
+        "pic_uuid": "facfabe0-9fff-463e-9a3e-0ae7fc2418a0"
+      }
+    ]
+  }
+}
