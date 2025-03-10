@@ -10,7 +10,7 @@ This project is a **API** built with **Golang** and **Echo framework**.
 
 ### Building  
 ```sh
-git clone https://github.com/yehez73/shuttleapps.git
+git clone https://github.com/zainkurniawann/aino-1234.git
 cd aino_doc
 go run .
 ```
