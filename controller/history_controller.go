@@ -6,6 +6,7 @@ import (
 	"document/service"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -237,6 +238,8 @@ func GetOlderTimelineHistorySuperAdmin(c echo.Context) error {
 			},
 		})
 	}
+	
+	log.Println("Received limit:", limitStr, "offset:", offsetStr)
 
 	// Lanjutkan dengan logika aplikasi Anda
 	// Contoh: Query database dengan limit dan offset yang sudah diatur
