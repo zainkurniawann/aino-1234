@@ -92,15 +92,7 @@ func AddDA(c echo.Context) error {
 	userName := c.Get("user_name").(string)
 	addFormRequest.FormData.UserID = userID
 	addFormRequest.FormData.Created_by = userName
-	// addFormRequest.FormData.isProject = false
-	// addFormRequest.FormData.projectCode =
-	// Token yang sudah dideskripsi
-	fmt.Println("Token yang sudah dideskripsi:", decrypted)
-	fmt.Println("User ID:", userID)
-	fmt.Println("User Name:", userName)
-	fmt.Println("Division Code:", divisionCode)
-	fmt.Println("yg dari frontend: ", addFormRequest)
-	// Lakukan validasi token
+
 	if userID == 0 && userName == "" {
 		return c.JSON(http.StatusUnauthorized, map[string]interface{}{
 			"code":    401,
@@ -226,10 +218,8 @@ func GetAllFormDAbyUser(c echo.Context) error {
 		})
 	}
 	userID := c.Get("user_id").(int)
-	roleCode := c.Get("role_code").(string)
+	// roleCode := c.Get("role_code").(string)
 
-	fmt.Println("User ID :", userID)
-	fmt.Println("Role code", roleCode)
 	form, err := service.GetAllDAbyUserID(userID)
 	if err != nil {
 		log.Print(err)
@@ -288,11 +278,9 @@ func GetAllDAbyAdmin(c echo.Context) error {
 			"status":  false,
 		})
 	}
-	userID := c.Get("user_id").(int)
-	roleCode := c.Get("role_code").(string)
+	// userID := c.Get("user_id").(int)
+	// roleCode := c.Get("role_code").(string)
 
-	fmt.Println("User ID :", userID)
-	fmt.Println("Role code", roleCode)
 	form, err := service.GetAllDAbyAdmin()
 	if err != nil {
 		log.Print(err)
@@ -492,12 +480,6 @@ func UpdateFormDA(c echo.Context) error {
 
 	updateFormRequest.FormData.Updated_by = updatedBy
 
-	// Token yang sudah dideskripsi
-	fmt.Println("Token yang sudah dideskripsi:", decrypted)
-	fmt.Println("User ID:", userID)
-	fmt.Println("user name: ", userName)
-
-	// Lakukan validasi token
 	if userID == 0 && userName == "" {
 		return c.JSON(http.StatusUnauthorized, map[string]interface{}{
 			"code":    401,
@@ -560,7 +542,6 @@ func UpdateFormDA(c echo.Context) error {
 		}
 	}
 
-	log.Println(previousContent)
 	return c.JSON(http.StatusOK, &models.Response{
 		Code:    200,
 		Message: "Formulir DA berhasil diperbarui!",
@@ -615,15 +596,14 @@ func FormDAByDivision(c echo.Context) error {
 		})
 	}
 
-	userID, ok := c.Get("user_id").(int)
-	if !ok {
-		return c.JSON(http.StatusUnauthorized, map[string]interface{}{
-			"code":    401,
-			"message": "User ID tidak ditemukan!",
-			"status":  false,
-		})
-	}
-	fmt.Println("User ID :", userID)
+	// userID, ok := c.Get("user_id").(int)
+	// if !ok {
+	// 	return c.JSON(http.StatusUnauthorized, map[string]interface{}{
+	// 		"code":    401,
+	// 		"message": "User ID tidak ditemukan!",
+	// 		"status":  false,
+	// 	})
+	// }
 
 	c.Set("division_code", claims.DivisionCode)
 	divisionCode, ok := c.Get("division_code").(string)
@@ -636,7 +616,6 @@ func FormDAByDivision(c echo.Context) error {
 		})
 	}
 
-	fmt.Println("Division Code :", divisionCode)
 
 	myform, err := service.FormDAByDivision(divisionCode)
 	if err != nil {
@@ -706,10 +685,8 @@ func SignatureUser(c echo.Context) error {
 		})
 	}
 	userID := c.Get("user_id").(int)
-	roleCode := c.Get("role_code").(string)
+	// roleCode := c.Get("role_code").(string)
 
-	fmt.Println("User ID :", userID)
-	fmt.Println("Role code", roleCode)
 	form, err := service.SignatureUser(userID)
 	if err != nil {
 		log.Print(err)

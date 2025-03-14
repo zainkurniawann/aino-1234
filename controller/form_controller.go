@@ -30,28 +30,8 @@ func AddForm(c echo.Context) error {
 		})
 	}
 
-	fmt.Println("Nilai isPublished yang diterima di backend:", addFormRequest.IsPublished)
-
 	tokenString := c.Request().Header.Get("Authorization")
 	secretKey := "secretJwToken"
-	// Mendapatkan division code dari token
-	// divisionCode, err := service.GetDivisionCode(tokenString)
-	// if err != nil {
-	// 	log.Print(err)
-	// 	// Handle error jika tidak dapat mengambil division code dari token
-	// 	return c.JSON(http.StatusInternalServerError, map[string]interface{}{
-	// 		"message": "Failed to get division code from token",
-	// 	})
-	// }
-
-	// // Buat trigger di database dengan menggunakan division code
-	// _, err = db.Exec("CREATE TRIGGER generate_surat_trigger AFTER INSERT ON form_ms FOR EACH ROW EXECUTE FUNCTION generate_surat_number($1)", divisionCode)
-	// if err != nil {
-	// 	// Handle error jika gagal membuat trigger
-	// 	return c.JSON(http.StatusInternalServerError, map[string]interface{}{
-	// 		"message": "Failed to create trigger",
-	// 	})
-	// }
 	if tokenString == "" {
 		return c.JSON(http.StatusUnauthorized, map[string]interface{}{
 			"code":    401,
@@ -98,11 +78,6 @@ func AddForm(c echo.Context) error {
 	userName := c.Get("user_name").(string)
 	addFormRequest.FormData.UserID = userID
 	addFormRequest.FormData.Created_by = userName
-	// Token yang sudah dideskripsi
-	fmt.Println("Token yang sudah dideskripsi:", decrypted)
-	fmt.Println("User ID:", userID)
-	fmt.Println("User Name:", userName)
-	fmt.Println("Division Code:", divisionCode)
 	// Lakukan validasi token
 	if userID == 0 && userName == "" {
 		return c.JSON(http.StatusUnauthorized, map[string]interface{}{
@@ -214,8 +189,6 @@ func MyForm(c echo.Context) error {
 	}
 	userID := c.Get("user_id").(int)
 
-	fmt.Println("User ID :", userID)
-
 	myform, err := service.MyForm(userID)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -284,15 +257,6 @@ func FormByDivision(c echo.Context) error {
 		})
 	}
 
-	userID, ok := c.Get("user_id").(int)
-	if !ok {
-		return c.JSON(http.StatusUnauthorized, map[string]interface{}{
-			"code":    401,
-			"message": "User ID tidak ditemukan!",
-			"status":  false,
-		})
-	}
-
 	divisionCode, ok := c.Get("division_code").(string)
 	if !ok {
 		return c.JSON(http.StatusUnauthorized, map[string]interface{}{
@@ -301,9 +265,6 @@ func FormByDivision(c echo.Context) error {
 			"status":  false,
 		})
 	}
-
-	fmt.Println("User ID :", userID)
-	fmt.Println("Division Code :", divisionCode)
 
 	myform, err := service.FormByDivision(divisionCode)
 	if err != nil {
@@ -364,8 +325,6 @@ func UpdateForm(c echo.Context) error {
 		IsPublished bool        `json:"isPublished"`
 		FormData    models.Form `json:"formData"`
 	}
-
-	fmt.Println("plis", updateFormRequest)
 
 	if err := c.Bind(&updateFormRequest); err != nil {
 		log.Print("error saat binding:", err)
@@ -461,13 +420,6 @@ func UpdateForm(c echo.Context) error {
 
 	updateFormRequest.FormData.Updated_by = updatedBy
 
-	// Token yang sudah dideskripsi
-	fmt.Println("Token yang sudah dideskripsi:", decrypted)
-	fmt.Println("User ID:", userID)
-	fmt.Println("user name: ", userName)
-	fmt.Println("division code:", divisionCode)
-
-	// Lakukan validasi token
 	if userID == 0 && userName == "" {
 		return c.JSON(http.StatusUnauthorized, map[string]interface{}{
 			"code":    401,

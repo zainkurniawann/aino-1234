@@ -16,6 +16,20 @@ import (
 )
 
 func AddBA(addForm models.Form, ba models.BA, isPublished bool, userID int, username string, divisionCode string, recursionCount int, signatories []models.Signatory) error {
+	// Mulai transaksi
+	tx, err := db.Beginx()
+	if err != nil {
+		log.Println("Error starting transaction:", err)
+		return err
+	}
+
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+			log.Println("Transaction rolled back due to error:", err)
+		}
+	}()
+
 	currentTimestamp := time.Now().UnixNano() / int64(time.Microsecond)
 	uniqueID := uuid.New().ID()
 	appID := currentTimestamp + int64(uniqueID)
@@ -28,21 +42,21 @@ func AddBA(addForm models.Form, ba models.BA, isPublished bool, userID int, user
 	}
 
 	var documentID int64
-	err := db.Get(&documentID, "SELECT document_id FROM document_ms WHERE document_uuid = $1", addForm.DocumentUUID)
+	err = tx.Get(&documentID, "SELECT document_id FROM document_ms WHERE document_uuid = $1", addForm.DocumentUUID)
 	if err != nil {
 		log.Println("Error getting document_id:", err)
 		return err
 	}
 
 	var projectID int64
-	err = db.Get(&projectID, "SELECT project_id FROM project_ms WHERE project_uuid = $1", addForm.ProjectUUID)
+	err = tx.Get(&projectID, "SELECT project_id FROM project_ms WHERE project_uuid = $1", addForm.ProjectUUID)
 	if err != nil {
 		log.Println("Error getting project_id:", err)
 		return err
 	}
 
 	var documentCode string
-	err = db.Get(&documentCode, "SELECT document_code FROM document_ms WHERE document_uuid = $1", addForm.DocumentUUID)
+	err = tx.Get(&documentCode, "SELECT document_code FROM document_ms WHERE document_uuid = $1", addForm.DocumentUUID)
 	if err != nil {
 		log.Println("Error getting document code:", err)
 		return err
@@ -61,7 +75,7 @@ func AddBA(addForm models.Form, ba models.BA, isPublished bool, userID int, user
 		return err
 	}
 
-	_, err = db.NamedExec("INSERT INTO form_ms (form_id, form_uuid, document_id, user_id, project_id, form_number, form_ticket, form_status, form_data, created_by) VALUES (:form_id, :form_uuid, :document_id, :user_id, :project_id, :form_number, :form_ticket, :form_status, :form_data, :created_by)", map[string]interface{}{
+	_, err = tx.NamedExec("INSERT INTO form_ms (form_id, form_uuid, document_id, user_id, project_id, form_number, form_ticket, form_status, form_data, created_by) VALUES (:form_id, :form_uuid, :document_id, :user_id, :project_id, :form_number, :form_ticket, :form_status, :form_data, :created_by)", map[string]interface{}{
 		"form_id":     appID,
 		"form_uuid":   uuidString,
 		"document_id": documentID,
@@ -73,11 +87,11 @@ func AddBA(addForm models.Form, ba models.BA, isPublished bool, userID int, user
 		"form_data":   baJSON, // Convert JSON to string
 		"created_by":  username,
 	})
-
 	if err != nil {
 		return err
 	}
-	personalNames, err := GetAllPersonalName() // Mengambil daftar semua personal name
+
+	personalNames, err := GetAllPersonalName()
 	if err != nil {
 		log.Println("Error getting personal names:", err)
 		return err
@@ -101,7 +115,7 @@ func AddBA(addForm models.Form, ba models.BA, isPublished bool, userID int, user
 			continue
 		}
 
-		_, err := db.NamedExec("INSERT INTO sign_form (sign_uuid, form_id, user_id, name, position, role_sign, created_by) VALUES (:sign_uuid, :form_id, :user_id, :name, :position, :role_sign, :created_by)", map[string]interface{}{
+		_, err = tx.NamedExec("INSERT INTO sign_form (sign_uuid, form_id, user_id, name, position, role_sign, created_by) VALUES (:sign_uuid, :form_id, :user_id, :name, :position, :role_sign, :created_by)", map[string]interface{}{
 			"sign_uuid":  uuidString,
 			"user_id":    userID,
 			"form_id":    appID,
@@ -114,6 +128,14 @@ func AddBA(addForm models.Form, ba models.BA, isPublished bool, userID int, user
 			return err
 		}
 	}
+
+	// Commit transaksi jika semua query sukses
+	err = tx.Commit()
+	if err != nil {
+		log.Println("Error committing transaction:", err)
+		return err
+	}
+
 	return nil
 }
 
@@ -1323,10 +1345,16 @@ func UpdateBA(updateBA models.Form, data models.BA, username string, userID int,
 	}
 	log.Println("DampakAnalisa JSON:", string(daJSON)) // Periksa hasil marshaling
 
-	_, err = db.NamedExec("UPDATE form_ms SET user_id = :user_id, form_ticket = :form_ticket, form_status = :form_status, form_data = :form_data, updated_by = :updated_by, updated_at = :updated_at WHERE form_uuid = :id", map[string]interface{}{
+	_, err = db.NamedExec(`
+	UPDATE form_ms 
+	SET user_id = :user_id, form_ticket = :form_ticket, project_id = :project_id, 
+	    form_status = :form_status, form_data = :form_data, 
+	    updated_by = :updated_by, updated_at = :updated_at 
+	WHERE form_uuid = :id`,
+	map[string]interface{}{
 		"user_id":     userID,
 		"form_ticket": updateBA.FormTicket,
-		"project_id":  projectID,
+		"project_id":  projectID, 
 		"form_status": formStatus,
 		"form_data":   daJSON,
 		"updated_by":  username,

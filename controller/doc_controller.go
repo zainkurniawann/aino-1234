@@ -6,8 +6,6 @@ import (
 	"document/models"
 	"document/service"
 	"encoding/json"
-	"fmt"
-	"log"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -62,7 +60,6 @@ func AddDocument(c echo.Context) error {
 
 	decrypted, err := DecryptJWE(tokenOnly, secretKey)
 	if err != nil {
-		fmt.Println("Gagal mendekripsi token:", err)
 		return c.JSON(http.StatusUnauthorized, map[string]interface{}{
 			"code":    401,
 			"message": "Token tidak valid!",
@@ -73,18 +70,13 @@ func AddDocument(c echo.Context) error {
 	var claims JwtCustomClaims
 	errJ := json.Unmarshal([]byte(decrypted), &claims)
 	if errJ != nil {
-		fmt.Println("Gagal mengurai klaim:", errJ)
 		return c.JSON(http.StatusUnauthorized, map[string]interface{}{
 			"code":    401,
 			"message": "Token tidak valid!",
 			"status":  false,
 		})
 	}
-	userName := c.Get("user_name").(string)  
-
-	fmt.Println("Token yang sudah dideskripsi:", decrypted)
-
-	fmt.Println("User name:", userName)
+	userName := c.Get("user_name").(string)
 
 	if userName == "" {
 		return c.JSON(http.StatusUnauthorized, map[string]interface{}{
@@ -93,6 +85,7 @@ func AddDocument(c echo.Context) error {
 			"status":  false,
 		})
 	}
+
 	var addDocument models.Document
 	if err := c.Bind(&addDocument); err != nil {
 		return c.JSON(http.StatusBadRequest, &models.Response{
@@ -154,7 +147,6 @@ func AddDocument(c echo.Context) error {
 			Status:  false,
 		})
 	}
-
 }
 
 func GetAllDoc(c echo.Context) error {
@@ -168,13 +160,10 @@ func GetAllDoc(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, response)
 	}
 	return c.JSON(http.StatusOK, documents)
-
 }
 
 func ShowDocById(c echo.Context) error {
 	id := c.Param("id")
-
-	var getDoc models.Document
 
 	getDoc, err := service.ShowDocById(id)
 	if err != nil {
@@ -185,13 +174,12 @@ func ShowDocById(c echo.Context) error {
 				Status:  false,
 			}
 			return c.JSON(http.StatusNotFound, response)
-		} else {
-			return c.JSON(http.StatusInternalServerError, &models.Response{
-				Code:    500,
-				Message: "Terjadi kesalahan internal pada server. Mohon coba beberapa saat lagi!",
-				Status:  false,
-			})
 		}
+		return c.JSON(http.StatusInternalServerError, &models.Response{
+			Code:    500,
+			Message: "Terjadi kesalahan internal pada server. Mohon coba beberapa saat lagi!",
+			Status:  false,
+		})
 	}
 
 	return c.JSON(http.StatusOK, getDoc)
@@ -200,8 +188,7 @@ func ShowDocById(c echo.Context) error {
 func UpdateDocument(c echo.Context) error {
 	id := c.Param("id")
 
-	perviousContent, errGet := service.ShowDocById(id)
-	log.Println("perviousContent", perviousContent)
+	_, errGet := service.ShowDocById(id)
 	if errGet != nil {
 		return c.JSON(http.StatusNotFound, &models.Response{
 			Code:    404,
@@ -233,7 +220,6 @@ func UpdateDocument(c echo.Context) error {
 
 	decrypted, err := DecryptJWE(tokenOnly, secretKey)
 	if err != nil {
-		fmt.Println("Gagal mendekripsi token:", err)
 		return c.JSON(http.StatusUnauthorized, map[string]interface{}{
 			"code":    401,
 			"message": "Token tidak valid!",
@@ -244,7 +230,6 @@ func UpdateDocument(c echo.Context) error {
 	var claims JwtCustomClaims
 	errJ := json.Unmarshal([]byte(decrypted), &claims)
 	if errJ != nil {
-		fmt.Println("Gagal mengurai klaim:", errJ)
 		return c.JSON(http.StatusUnauthorized, map[string]interface{}{
 			"code":    401,
 			"message": "Token tidak valid!",
@@ -252,10 +237,6 @@ func UpdateDocument(c echo.Context) error {
 		})
 	}
 	userName := c.Get("user_name").(string)
-
-	fmt.Println("Token yang sudah dideskripsi:", decrypted)
-
-	fmt.Println("User name:", userName)
 
 	if userName == "" {
 		return c.JSON(http.StatusUnauthorized, map[string]interface{}{
@@ -273,6 +254,7 @@ func UpdateDocument(c echo.Context) error {
 			Status:  false,
 		})
 	}
+
 	whitespace := regexp.MustCompile(`^\s`)
 	if whitespace.MatchString(editDoc.Code) {
 		return c.JSON(http.StatusUnprocessableEntity, &models.Response{
@@ -289,6 +271,7 @@ func UpdateDocument(c echo.Context) error {
 			Status:  false,
 		})
 	}
+
 	err = c.Validate(&editDoc)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, &models.Response{
@@ -297,59 +280,52 @@ func UpdateDocument(c echo.Context) error {
 			Status:  false,
 		})
 	}
-	if err == nil {
-		existingDoc, err := service.GetDocCodeName(id)
-		if err != nil {
-			return c.JSON(http.StatusInternalServerError, &models.Response{
-				Code:    500,
-				Message: "Terjadi kesalahan internal pada server.",
-				Status:  false,
-			})
-		}
 
-		if editDoc.Code != "" && editDoc.Code != existingDoc.Code {
-			existingDocID, err := service.GetDocumentIDByCode(editDoc.Code)
-			if err == nil && strconv.Itoa(existingDocID) != id {
-				return c.JSON(http.StatusBadRequest, &models.Response{
-					Code:    400,
-					Message: "Document dengan code tersebut sudah ada! Document tidak boleh sama!",
-					Status:  false,
-				})
-			}
-		}
-
-		if editDoc.Name != "" && editDoc.Name != existingDoc.Name {
-			existingDocID, err := service.GetDocumentIDByName(editDoc.Name)
-			if err == nil && strconv.Itoa(existingDocID) != id {
-				return c.JSON(http.StatusBadRequest, &models.Response{
-					Code:    400,
-					Message: "Document dengan name tersebut sudah ada! Document tidak boleh sama!",
-					Status:  false,
-				})
-			}
-		}
-
-		_, errService := service.UpdateDocument(editDoc, id, userName)
-		if errService != nil {
-			return c.JSON(http.StatusInternalServerError, &models.Response{
-				Code:    500,
-				Message: "Terjadi kesalahan internal pada server. Mohon coba beberapa saat lagi!",
-				Status:  false,
-			})
-		}
-
-		return c.JSON(http.StatusOK, &models.Response{
-			Code:    200,
-			Message: "Document berhasil diperbarui!",
-			Status:  true,
+	existingDoc, err := service.GetDocCodeName(id)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, &models.Response{
+			Code:    500,
+			Message: "Terjadi kesalahan internal pada server.",
+			Status:  false,
 		})
-	} else {
+	}
+
+	if editDoc.Code != "" && editDoc.Code != existingDoc.Code {
+		existingDocID, err := service.GetDocumentIDByCode(editDoc.Code)
+		if err == nil && strconv.Itoa(existingDocID) != id {
+			return c.JSON(http.StatusBadRequest, &models.Response{
+				Code:    400,
+				Message: "Document dengan code tersebut sudah ada! Document tidak boleh sama!",
+				Status:  false,
+			})
+		}
+	}
+
+	if editDoc.Name != "" && editDoc.Name != existingDoc.Name {
+		existingDocID, err := service.GetDocumentIDByName(editDoc.Name)
+		if err == nil && strconv.Itoa(existingDocID) != id {
+			return c.JSON(http.StatusBadRequest, &models.Response{
+				Code:    400,
+				Message: "Document dengan name tersebut sudah ada! Document tidak boleh sama!",
+				Status:  false,
+			})
+		}
+	}
+
+	_, errService := service.UpdateDocument(editDoc, id, userName)
+	if errService != nil {
 		return c.JSON(http.StatusInternalServerError, &models.Response{
 			Code:    500,
 			Message: "Terjadi kesalahan internal pada server. Mohon coba beberapa saat lagi!",
 			Status:  false,
 		})
 	}
+
+	return c.JSON(http.StatusOK, &models.Response{
+		Code:    200,
+		Message: "Document berhasil diperbarui!",
+		Status:  true,
+	})
 }
 
 func DeleteDoc(c echo.Context) error {
@@ -376,13 +352,13 @@ func DeleteDoc(c echo.Context) error {
 
 	decrypted, err := DecryptJWE(tokenOnly, secretKey)
 	if err != nil {
-		fmt.Println("Gagal mendekripsi token:", err)
 		return c.JSON(http.StatusUnauthorized, map[string]interface{}{
 			"code":    401,
 			"message": "Token tidak valid!",
 			"status":  false,
 		})
 	}
+
 	id := c.Param("id")
 	_, errGet := service.ShowDocById(id)
 	if errGet != nil {
@@ -396,7 +372,6 @@ func DeleteDoc(c echo.Context) error {
 	var claims JwtCustomClaims
 	errJ := json.Unmarshal([]byte(decrypted), &claims)
 	if errJ != nil {
-		fmt.Println("Gagal mengurai klaim:", errJ)
 		return c.JSON(http.StatusUnauthorized, map[string]interface{}{
 			"code":    401,
 			"message": "Token tidak valid!",
@@ -413,7 +388,6 @@ func DeleteDoc(c echo.Context) error {
 			Message: "Terjadi kesalahan internal pada server. Mohon coba beberapa saat lagi!",
 			Status:  false,
 		})
-
 	}
 
 	return c.JSON(http.StatusOK, &models.Response{
@@ -421,5 +395,4 @@ func DeleteDoc(c echo.Context) error {
 		Message: "Document berhasil dihapus!",
 		Status:  true,
 	})
-
 }

@@ -32,7 +32,6 @@ func AddITCM(c echo.Context) error {
 			Status:  false,
 		})
 	}
-	fmt.Println("Nilai isPublished yang diterima di backend:", addFormRequest.IsPublished)
 
 	tokenString := c.Request().Header.Get("Authorization")
 	secretKey := "secretJwToken"
@@ -84,11 +83,6 @@ func AddITCM(c echo.Context) error {
 	addFormRequest.FormData.UserID = userID
 	addFormRequest.FormData.Created_by = userName
 
-	fmt.Println("Token yang sudah dideskripsi:", decrypted)
-	fmt.Println("User ID:", userID)
-	fmt.Println("User Name:", userName)
-	fmt.Println("Division Code:", divisionCode)
-	// Lakukan validasi token
 	if userID == 0 && userName == "" {
 		return c.JSON(http.StatusUnauthorized, map[string]interface{}{
 			"code":    401,
@@ -216,10 +210,8 @@ func GetAllFormITCMbyUserID(c echo.Context) error {
 		})
 	}
 	userID := c.Get("user_id").(int)
-	roleCode := c.Get("role_code").(string)
+	// roleCode := c.Get("role_code").(string)
 
-	fmt.Println("User ID :", userID)
-	fmt.Println("Role code", roleCode)
 	form, err := service.GetAllITCMbyUserID(userID)
 	if err != nil {
 		log.Print(err)
@@ -280,11 +272,9 @@ func GetAllFormITCMAdmin(c echo.Context) error {
 			"status":  false,
 		})
 	}
-	userID := c.Get("user_id").(int)
-	roleCode := c.Get("role_code").(string)
+	// userID := c.Get("user_id").(int)
+	// roleCode := c.Get("role_code").(string)
 
-	fmt.Println("User ID :", userID)
-	fmt.Println("Role code", roleCode)
 	form, err := service.GetAllFormITCMAdmin()
 	if err != nil {
 		log.Print(err)
@@ -498,12 +488,6 @@ func UpdateFormITCM(c echo.Context) error {
 
 	updateFormRequest.FormData.Updated_by = updatedBy
 
-	// Token yang sudah dideskripsi
-	fmt.Println("Token yang sudah dideskripsi:", decrypted)
-	fmt.Println("User ID:", userID)
-	fmt.Println("user name: ", userName)
-
-	// Lakukan validasi token
 	if userID == 0 && userName == "" {
 		return c.JSON(http.StatusUnauthorized, map[string]interface{}{
 			"code":    401,
@@ -566,7 +550,6 @@ func UpdateFormITCM(c echo.Context) error {
 		}
 	}
 
-	log.Println(previousContent)
 	return c.JSON(http.StatusOK, &models.Response{
 		Code:    200,
 		Message: "Formulir ITCM berhasil diperbarui!",
@@ -621,15 +604,14 @@ func FormITCMByDivision(c echo.Context) error {
 		})
 	}
 
-	userID, ok := c.Get("user_id").(int)
-	if !ok {
-		return c.JSON(http.StatusUnauthorized, map[string]interface{}{
-			"code":    401,
-			"message": "User ID tidak ditemukan!",
-			"status":  false,
-		})
-	}
-	fmt.Println("User ID :", userID)
+	// userID, ok := c.Get("user_id").(int)
+	// if !ok {
+	// 	return c.JSON(http.StatusUnauthorized, map[string]interface{}{
+	// 		"code":    401,
+	// 		"message": "User ID tidak ditemukan!",
+	// 		"status":  false,
+	// 	})
+	// }
 
 	c.Set("division_code", claims.DivisionCode)
 	divisionCode, ok := c.Get("division_code").(string)
@@ -641,8 +623,6 @@ func FormITCMByDivision(c echo.Context) error {
 			"status":  false,
 		})
 	}
-
-	fmt.Println("Division Code :", divisionCode)
 
 	myform, err := service.FormITCMByDivision(divisionCode)
 	if err != nil {
@@ -712,10 +692,8 @@ func SignatureUserITCM(c echo.Context) error {
 		})
 	}
 	userID := c.Get("user_id").(int)
-	roleCode := c.Get("role_code").(string)
+	// roleCode := c.Get("role_code").(string)
 
-	fmt.Println("User ID :", userID)
-	fmt.Println("Role code", roleCode)
 	form, err := service.SignatureUserITCM(userID)
 	if err != nil {
 		log.Print(err)

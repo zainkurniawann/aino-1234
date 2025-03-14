@@ -16,7 +16,10 @@ CREATE TYPE role AS ENUM (
     'Pengaju',
     'Atasan Pengaju',
     'Pihak Pertama',
-    'Pihak Kedua'
+    'Pihak Kedua',
+    'Pelaksana',
+    'Mengetahui1',
+    'Mengetahui2'
 );
 
 

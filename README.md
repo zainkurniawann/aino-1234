@@ -6,7 +6,7 @@ This project is a **API** built with **Golang** and **Echo framework**.
 
 ### Requirements  
 - [Golang 1.23.3](https://go.dev/doc/install)  
-- [Postgresql 8.7](https://www.postgresql.org/download/)  
+- [Postgresql 16.3](https://www.postgresql.org/download/)  
 
 ### Building  
 ```sh

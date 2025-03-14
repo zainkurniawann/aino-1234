@@ -545,74 +545,78 @@ func AdminMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	}
 }
 
-// Middleware Logger Warna
+// Middleware untuk logging request
 func ColoredLogger(next echo.HandlerFunc) echo.HandlerFunc {
-	// Warna untuk method dan status code
-	var (
-		Blue    = color.New(color.FgBlue).SprintFunc()    // Method: GET, POST, UPDATE, DELETE
-		Green   = color.New(color.FgGreen).SprintFunc()   // Status: 200 (Success)
-		Yellow  = color.New(color.FgYellow).SprintFunc()  // Status: 400 (Bad Request), 401 (Unauthorized), 404 (Not Found)
-		Red     = color.New(color.FgRed).SprintFunc()     // Status: 500 (Error)
-		Magenta = color.New(color.FgMagenta).SprintFunc() // Status: 403 (Forbidden)
-	)
-
 	return func(c echo.Context) error {
 		start := time.Now()
-		err := next(c)
-		stop := time.Now()
 
-		// Ambil informasi request
+		err := next(c)
+
 		method := c.Request().Method
 		statusCode := c.Response().Status
 		path := c.Request().URL.Path
-		latency := stop.Sub(start)
+		latency := time.Since(start)
 
-		// Tentukan pesan berdasarkan status code
-		var statusMessage string
-		switch statusCode {
-		case 200:
-			statusMessage = Green("Kok Iso To")
-		case 400:
-			statusMessage = Yellow("Bad Request Kocak")
-		case 401:
-			statusMessage = Yellow("Tokenmu wir")
-		case 403:
-			statusMessage = Magenta("Forbidden Woi")
-		case 404:
-			statusMessage = Yellow("Not Found wir")
-		case 500:
-			statusMessage = Red("Error Woilah")
-		default:
-			statusMessage = Yellow("Jann Ngrepoti Tenan")
-		}
+		methodColor := color.New(color.FgBlue).SprintFunc()
+		statusColor := getStatusColor(statusCode)
+		
+		// Format status code + status message dengan warna
+		coloredStatus := statusColor(fmt.Sprintf("%d %s", statusCode, getStatusMessage(statusCode)))
 
-		// Pilih warna berdasarkan method
-		var methodColor func(a ...interface{}) string
-		switch method {
-		case "GET", "POST", "UPDATE", "DELETE":
-			methodColor = Blue
-		default:
-			methodColor = Blue
-		}
-
-		// Pilih warna berdasarkan status code
-		var statusColor func(a ...interface{}) string
-		switch statusCode {
-		case 200:
-			statusColor = Green // Success
-		case 400, 401, 404:
-			statusColor = Yellow // Bad Request, Unauthorized, Not Found
-		case 403:
-			statusColor = Magenta // Forbidden
-		case 500:
-			statusColor = Red // Error
-		default:
-			statusColor = Yellow
-		}
-
-		// Print log dengan warna dan pesan status
-		fmt.Printf("%s %s - %s [%s] (%s)\n", methodColor(method), statusColor(statusCode), statusMessage, path, latency)
+		fmt.Printf("%s %s - %s (%v)\n", methodColor(method), path, coloredStatus, latency)
 
 		return err
 	}
 }
+
+// Fungsi untuk menentukan warna berdasarkan status code
+func getStatusColor(statusCode int) func(a ...interface{}) string {
+	switch {
+	case statusCode >= 200 && statusCode < 300:
+		return green
+	case statusCode >= 400 && statusCode < 500:
+		return yellow
+	case statusCode >= 500:
+		return red
+	default:
+		return white
+	}
+}
+
+// Fungsi untuk menentukan status message berdasarkan kode status
+func getStatusMessage(statusCode int) string {
+	switch statusCode {
+	case 200:
+		return "Success"
+	case 201:
+		return "Created"
+	case 204:
+		return "No Content (No Changes)"
+	case 400:
+		return "Bad Request"
+	case 401:
+		return "Unauthorized"
+	case 403:
+		return "Forbidden"
+	case 404:
+		return "Not Found"
+	case 405:
+		return "Method Not Allowed"
+	case 409:
+		return "Conflict"
+	case 422:
+		return "Unprocessable Entity"
+	case 500:
+		return "Internal Server Error"
+	default:
+		return "Unknown Status"
+	}
+}
+
+// Warna untuk status code
+var (
+	green  = color.New(color.FgGreen).SprintFunc()
+	yellow = color.New(color.FgYellow).SprintFunc()
+	red    = color.New(color.FgRed).SprintFunc()
+	white  = color.New(color.FgWhite).SprintFunc()
+)

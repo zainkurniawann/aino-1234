@@ -32,13 +32,17 @@ type AddInfoHAReq struct {
 }
 
 type AddInfoHA struct {
-	UUID     string `json:"form_uuid" db:"form_uuid"`
-	Name     string `json:"info_name" db:"name"`
-	Instansi string `json:"instansi" db:"instansi"`
-	Position string `json:"position" db:"position"`
-	Username string `json:"username" db:"username"`
-	Password string `json:"password" db:"password"`
-	Scope    string `json:"scope" db:"scope"`
+	UUID        string `json:"form_uuid" db:"form_uuid"`
+	Name        string `json:"info_name" db:"name"`
+	Instansi    string `json:"instansi" db:"instansi"`
+	Position    string `json:"position" db:"position"`
+	Username    string `json:"username" db:"username"`
+	Password    string `json:"password" db:"password"`
+	Scope       string `json:"scope" db:"scope"`
+	Host        string `json:"host" db:"host"`
+	Type        string `json:"type" db:"type"`
+	Matched     string `json:"matched" db:"matched"`
+	Description string `json:"description" db:"description"`
 }
 
 type FormsHAReq struct {
@@ -78,6 +82,8 @@ type FormsHA struct {
 	DeletedAt      sql.NullTime   `json:"deleted_at" db:"deleted_at"`
 	ApprovalStatus string         `json:"approval_status" db:"approval_status"`
 	Reason         string         `json:"reason" db:"reason"` // tambahkan field ini
+	StartAt        string         `json:"start_at" db:"start_at"`
+	EndedAt        string         `json:"ended_at" db:"ended_at"`
 }
 
 type HAReq struct {
@@ -92,6 +98,8 @@ type HAReq struct {
 type HA struct {
 	FormName string `json:"form_name" db:"form_name"`
 	FormType string `json:"form_type" db:"form_type"`
+	StartAt  string `json:"start_at" db:"start_at"`
+	EndedAt  string `json:"ended_at" db:"ended_at"`
 }
 type FormsHAAll struct {
 	FormUUID      string         `json:"form_uuid" db:"form_uuid"`
@@ -119,13 +127,17 @@ type FormsHAAll struct {
 }
 
 type HakAksesInfo struct {
-	InfoUUID string `json:"info_uuid" db:"info_uuid"`
-	InfoName string `json:"info_name" db:"info_name"`
-	Instansi string `json:"instansi" db:"instansi"`
-	Position string `json:"position" db:"position"`
-	Username string `json:"username" db:"username"`
-	Password string `json:"password" db:"password"`
-	Scope    string `json:"scope" db:"scope"`
+	InfoUUID    string `json:"info_uuid" db:"info_uuid"`
+	InfoName    string `json:"info_name" db:"info_name"`
+	Instansi    string `json:"instansi" db:"instansi"`
+	Position    string `json:"position" db:"position"`
+	Username    string `json:"username" db:"username"`
+	Password    string `json:"password" db:"password"`
+	Scope       string `json:"scope" db:"scope"`
+	Host        string `json:"host" db:"host"`
+	Type        string `json:"type" db:"type"`
+	Matched     string `json:"matched" db:"matched"`
+	Description string `json:"description" db:"description"`
 }
 
 type HakAksesRequest struct {

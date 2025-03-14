@@ -22,16 +22,15 @@ import (
 
 func AddBA(c echo.Context) error {
 	const maxRecursionCount = 1000
-	recursionCount := 0 // Set nilai awal untuk recursionCount
+	recursionCount := 0 
 	var addFormRequest struct {
 		IsPublished bool               `json:"isPublished"`
 		FormData    models.Form        `json:"formData"`
-		BA          models.BA          `json:"data_ba"` // Tambahkan BA ke dalam struct request
+		BA          models.BA          `json:"data_ba"` 
 		Signatory   []models.Signatory `json:"signatories"`
 	}
 
 	if err := c.Bind(&addFormRequest); err != nil {
-		log.Print(err)
 		return c.JSON(http.StatusBadRequest, &models.Response{
 			Code:    400,
 			Message: "Data tidak valid!",
@@ -47,8 +46,6 @@ func AddBA(c echo.Context) error {
 		})
 	}
 
-	fmt.Println("Nilai isPublished yang diterima di backend:", addFormRequest.IsPublished)
-
 	tokenString := c.Request().Header.Get("Authorization")
 	secretKey := "secretJwToken"
 
@@ -60,7 +57,6 @@ func AddBA(c echo.Context) error {
 		})
 	}
 
-	// Periksa apakah tokenString mengandung "Bearer "
 	if !strings.HasPrefix(tokenString, "Bearer ") {
 		return c.JSON(http.StatusUnauthorized, map[string]interface{}{
 			"code":    401,
@@ -69,13 +65,10 @@ func AddBA(c echo.Context) error {
 		})
 	}
 
-	// Hapus "Bearer " dari tokenString
 	tokenOnly := strings.TrimPrefix(tokenString, "Bearer ")
 
-	//dekripsi token JWE
 	decrypted, err := DecryptJWE(tokenOnly, secretKey)
 	if err != nil {
-		fmt.Println("Gagal mendekripsi token:", err)
 		return c.JSON(http.StatusUnauthorized, map[string]interface{}{
 			"code":    401,
 			"message": "Token tidak valid!",
@@ -86,7 +79,6 @@ func AddBA(c echo.Context) error {
 	var claims JwtCustomClaims
 	errJ := json.Unmarshal([]byte(decrypted), &claims)
 	if errJ != nil {
-		fmt.Println("Gagal mengurai klaim:", errJ)
 		return c.JSON(http.StatusUnauthorized, map[string]interface{}{
 			"code":    401,
 			"message": "Token tidak valid!",
@@ -94,20 +86,11 @@ func AddBA(c echo.Context) error {
 		})
 	}
 	divisionCode := c.Get("division_code").(string)
-	userID := c.Get("user_id").(int) // Mengambil userUUID dari konteks
+	userID := c.Get("user_id").(int) 
 	userName := c.Get("user_name").(string)
 	addFormRequest.FormData.UserID = userID
 	addFormRequest.FormData.Created_by = userName
-	// addFormRequest.FormData.isProject = false
-	// addFormRequest.FormData.projectCode =
-	// Token yang sudah dideskripsi
-	fmt.Println("Token yang sudah dideskripsi:", decrypted)
-	fmt.Println("User ID:", userID)
-	fmt.Println("User Name:", userName)
-	fmt.Println("Division Code:", divisionCode)
-	fmt.Println("tes")
 
-	// Lakukan validasi token
 	if userID == 0 && userName == "" {
 		return c.JSON(http.StatusUnauthorized, map[string]interface{}{
 			"code":    401,
@@ -116,7 +99,6 @@ func AddBA(c echo.Context) error {
 		})
 	}
 
-	// Validasi spasi untuk Code, Name, dan NumberFormat
 	whitespace := regexp.MustCompile(`^\s`)
 	if whitespace.MatchString(addFormRequest.FormData.FormTicket) || whitespace.MatchString(addFormRequest.FormData.FormNumber) {
 		return c.JSON(http.StatusUnprocessableEntity, &models.Response{
@@ -127,13 +109,10 @@ func AddBA(c echo.Context) error {
 	}
 
 	errVal := c.Validate(&addFormRequest.FormData)
-	//	addFormRequest.FormData.UserID = userID
 	if errVal == nil {
-		// Gunakan addFormRequest.IsPublished untuk menentukan apakah menyimpan sebagai draft atau mempublish
 		addroleErr := service.AddBA(addFormRequest.FormData, addFormRequest.BA, addFormRequest.IsPublished, userID, userName, divisionCode, recursionCount, addFormRequest.Signatory)
 
 		if addroleErr != nil {
-			log.Print(addroleErr)
 			return c.JSON(http.StatusInternalServerError, &models.Response{
 				Code:    500,
 				Message: "Terjadi kesalahan internal pada server. Coba beberapa saat lagi",
@@ -148,7 +127,6 @@ func AddBA(c echo.Context) error {
 		})
 
 	} else {
-		fmt.Println(errVal)
 		return c.JSON(http.StatusUnprocessableEntity, &models.Response{
 			Code:    422,
 			Message: "Data tidak boleh kosong!",
@@ -171,9 +149,7 @@ func AddBAAsset(c echo.Context) error {
 		Signatory   []models.Signatory `json:"signatories"`
 	}
 
-	fmt.Println("1212", addFormRequest)
 	if err := c.Bind(&addFormRequest); err != nil {
-		log.Print(err)
 		return c.JSON(http.StatusBadRequest, &models.Response{
 			Code:    400,
 			Message: "Data tidak valid!",
@@ -189,8 +165,6 @@ func AddBAAsset(c echo.Context) error {
 		})
 	}
 
-	fmt.Println("Nilai isPublished yang diterima di backend:", addFormRequest.IsPublished)
-
 	tokenString := c.Request().Header.Get("Authorization")
 	secretKey := "secretJwToken"
 
@@ -202,7 +176,6 @@ func AddBAAsset(c echo.Context) error {
 		})
 	}
 
-	// Periksa apakah tokenString mengandung "Bearer "
 	if !strings.HasPrefix(tokenString, "Bearer ") {
 		return c.JSON(http.StatusUnauthorized, map[string]interface{}{
 			"code":    401,
@@ -211,13 +184,10 @@ func AddBAAsset(c echo.Context) error {
 		})
 	}
 
-	// Hapus "Bearer " dari tokenString
 	tokenOnly := strings.TrimPrefix(tokenString, "Bearer ")
 
-	//dekripsi token JWE
 	decrypted, err := DecryptJWE(tokenOnly, secretKey)
 	if err != nil {
-		fmt.Println("Gagal mendekripsi token:", err)
 		return c.JSON(http.StatusUnauthorized, map[string]interface{}{
 			"code":    401,
 			"message": "Token tidak valid!",
@@ -228,7 +198,6 @@ func AddBAAsset(c echo.Context) error {
 	var claims JwtCustomClaims
 	errJ := json.Unmarshal([]byte(decrypted), &claims)
 	if errJ != nil {
-		fmt.Println("Gagal mengurai klaim:", errJ)
 		return c.JSON(http.StatusUnauthorized, map[string]interface{}{
 			"code":    401,
 			"message": "Token tidak valid!",
@@ -240,16 +209,7 @@ func AddBAAsset(c echo.Context) error {
 	userName := c.Get("user_name").(string)
 	addFormRequest.FormData.UserID = userID
 	addFormRequest.FormData.Created_by = userName
-	// addFormRequest.FormData.isProject = false
-	// addFormRequest.FormData.projectCode =
-	// Token yang sudah dideskripsi
-	// fmt.Println("Token yang sudah dideskripsi:", decrypted)
-	// fmt.Println("User ID:", userID)
-	// fmt.Println("User Name:", userName)
-	// fmt.Println("Division Code:", divisionCode)
-	// fmt.Println("tes")
 
-	// Lakukan validasi token
 	if userID == 0 && userName == "" {
 		return c.JSON(http.StatusUnauthorized, map[string]interface{}{
 			"code":    401,
@@ -259,7 +219,6 @@ func AddBAAsset(c echo.Context) error {
 	}
 
 	assetImg := addFormRequest.BeritaAcara.Image
-	fmt.Println("Gambar diterima:", assetImg)
 
 	if assetImg == "" {
 		return c.JSON(http.StatusBadRequest, &models.Response{
@@ -269,7 +228,6 @@ func AddBAAsset(c echo.Context) error {
 		})
 	}
 
-	// Extract the Base64 data
 	parts := strings.Split(assetImg, ",")
 	if len(parts) != 2 {
 		return c.JSON(http.StatusBadRequest, &models.Response{
@@ -279,7 +237,6 @@ func AddBAAsset(c echo.Context) error {
 		})
 	}
 
-	// Decode the Base64 image
 	imgData, err := base64.StdEncoding.DecodeString(parts[1])
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, &models.Response{
@@ -289,14 +246,11 @@ func AddBAAsset(c echo.Context) error {
 		})
 	}
 
-	// Generate a unique filename using UUID
 	uniqueID := uuid.New().String()                      // Generates a new UUID
 	filename := fmt.Sprintf("evidence_%s.png", uniqueID) // Format filename
 
-	// Set folder for saving image
 	dst := filepath.Join("assets/images/pp", filename) // Use the unique filename
 
-	// Save the image to file
 	err = os.WriteFile(dst, imgData, 0644) // Using WriteFile to create the file
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, &models.Response{
@@ -309,13 +263,10 @@ func AddBAAsset(c echo.Context) error {
 	addFormRequest.BeritaAcara.Image = filename
 
 	errVal := c.Validate(&addFormRequest.FormData)
-	//	addFormRequest.FormData.UserID = userID
 	if errVal == nil {
-		// Gunakan addFormRequest.IsPublished untuk menentukan apakah menyimpan sebagai draft atau mempublish
 		addroleErr := service.AddBeritaAcara(addFormRequest.FormData, addFormRequest.BeritaAcara, addFormRequest.IsPublished, userID, userName, divisionCode, recursionCount, addFormRequest.Signatory)
 
 		if addroleErr != nil {
-			log.Print(addroleErr)
 			return c.JSON(http.StatusInternalServerError, &models.Response{
 				Code:    500,
 				Message: "Terjadi kesalahan internal pada server. Coba beberapa saat lagi",
@@ -330,7 +281,6 @@ func AddBAAsset(c echo.Context) error {
 		})
 
 	} else {
-		fmt.Println(errVal)
 		return c.JSON(http.StatusUnprocessableEntity, &models.Response{
 			Code:    422,
 			Message: "Data tidak boleh kosong!",
@@ -342,7 +292,6 @@ func AddBAAsset(c echo.Context) error {
 func GetBACode(c echo.Context) error {
 	documentCode, err := service.GetBACode()
 	if err != nil {
-		log.Print(err)
 		response := models.Response{
 			Code:    500,
 			Message: "Terjadi kesalahan internal server. Mohon coba beberapa saat lagi",
@@ -363,7 +312,6 @@ func AddAsset(c echo.Context) error {
 		DataPIC   []models.Pic `json:"data_pic"`
 	}
 
-	// Ambil token dari header
 	tokenString := c.Request().Header.Get("Authorization")
 	secretKey := "secretJwToken"
 
@@ -377,7 +325,6 @@ func AddAsset(c echo.Context) error {
 
 	tokenOnly := strings.TrimPrefix(tokenString, "Bearer ")
 
-	// Dekripsi token
 	decrypted, err := DecryptJWE(tokenOnly, secretKey)
 	if err != nil {
 		return c.JSON(http.StatusUnauthorized, map[string]interface{}{
@@ -396,7 +343,6 @@ func AddAsset(c echo.Context) error {
 		})
 	}
 
-	// Ambil data user dari context
 	divisionCode, _ := c.Get("division_code").(string)
 	userID, _ := c.Get("user_id").(int)
 	userName, _ := c.Get("user_name").(string)
@@ -410,7 +356,6 @@ func AddAsset(c echo.Context) error {
 	}
 
 	if err := c.Bind(&addAssetRequest); err != nil {
-		log.Print(err)
 		return c.JSON(http.StatusBadRequest, &models.Response{
 			Code:    400,
 			Message: "Data tidak valid!",
@@ -418,7 +363,6 @@ func AddAsset(c echo.Context) error {
 		})
 	}
 
-	// Validasi input
 	if len(addAssetRequest.AssetData.NamaAsset) == 0 {
 		return c.JSON(http.StatusBadRequest, &models.Response{
 			Code:    400,
@@ -450,8 +394,8 @@ func AddAsset(c echo.Context) error {
 			Message: "Format tanggal pengadaan tidak valid! Gunakan format YYYY-MM-DD.",
 			Status:  false,
 		})
-		log.Println("parsedDate", parsedDate)
 	}
+	log.Println("parsedDate", parsedDate)
 
 	if addAssetRequest.AssetData.AssetType == "" {
 		return c.JSON(http.StatusBadRequest, &models.Response{
@@ -461,12 +405,10 @@ func AddAsset(c echo.Context) error {
 		})
 	}
 
-	// Simpan gambar dan ambil nama file
 	var savedImages []string
 	for _, imgBase64 := range addAssetRequest.AssetData.AssetImg {
 		imgBase64 = cleanBase64(strings.TrimSpace(imgBase64)) // Bersihkan Base64
 
-		// Cek apakah Base64 valid sebelum decode
 		if !isValidBase64(imgBase64) {
 			return c.JSON(http.StatusBadRequest, &models.Response{
 				Code:    400,
@@ -475,7 +417,6 @@ func AddAsset(c echo.Context) error {
 			})
 		}
 
-		// Decode Base64 menjadi byte
 		imgData, err := base64.StdEncoding.DecodeString(imgBase64)
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, &models.Response{
@@ -522,13 +463,11 @@ func AddAsset(c echo.Context) error {
 		})
 	}
 
-	// Simpan asset ke database
 	assetToSave := addAssetRequest.AssetData
 	assetToSave.AssetImg = nil
 
 	err = service.AddAsset(assetToSave, addAssetRequest.DataPIC, userID, userName, divisionCode, recursionCount, string(assetImgJSON))
 	if err != nil {
-		log.Print(err)
 		return c.JSON(http.StatusInternalServerError, &models.Response{
 			Code:    500,
 			Message: "Terjadi kesalahan internal pada server. Coba beberapa saat lagi",
@@ -543,38 +482,13 @@ func AddAsset(c echo.Context) error {
 	})
 }
 
-// func saveAssetImages(assetID string, base64Images []string) ([]string, error) {
-// 	var savedFileNames []string
 
-// 	for _, imgBase64 := range base64Images {
-// 		imgBase64 = cleanBase64(strings.TrimSpace(imgBase64))
 
-// 		// Validasi Base64
-// 		if !isValidBase64(imgBase64) {
-// 			return nil, fmt.Errorf("format gambar tidak valid")
-// 		}
 
-// 		// Decode Base64
-// 		imgData, err := base64.StdEncoding.DecodeString(imgBase64)
-// 		if err != nil {
-// 			return nil, fmt.Errorf("gagal mendekode gambar")
-// 		}
 
-// 		// Buat nama file unik dengan assetID
-// 		fileName := fmt.Sprintf("asset_%s_%s.png", assetID, uuid.New().String())
-// 		dstPath := filepath.Join("assets/images", fileName)
 
-// 		// Simpan gambar ke folder
-// 		err = os.WriteFile(dstPath, imgData, 0644)
-// 		if err != nil {
-// 			return nil, fmt.Errorf("gagal menyimpan file: %s", err)
-// 		}
 
-// 		savedFileNames = append(savedFileNames, fileName)
-// 	}
 
-// 	return savedFileNames, nil
-// }
 
 func isValidBase64(str string) bool {
 	str = strings.TrimSpace(str)
@@ -600,7 +514,6 @@ func cleanBase64(img string) string {
 func GetAllFormBA(c echo.Context) error {
 	form, err := service.GetAllFormBA()
 	if err != nil {
-		log.Print(err)
 		response := models.Response{
 			Code:    500,
 			Message: "Terjadi kesalahan internal server. Mohon coba beberapa saat lagi",
@@ -614,7 +527,6 @@ func GetAllFormBA(c echo.Context) error {
 func GetAllFormBAAssets(c echo.Context) error {
 	form, err := service.GetAllFormBAAssets()
 	if err != nil {
-		log.Print(err)
 		response := models.Response{
 			Code:    500,
 			Message: "Terjadi kesalahan internal server. Mohon coba beberapa saat lagi",
@@ -628,7 +540,6 @@ func GetAllFormBAAssets(c echo.Context) error {
 func GetAllAssets(c echo.Context) error {
 	form, err := service.GetAllAssets()
 	if err != nil {
-		log.Print(err)
 		response := models.Response{
 			Code:    500,
 			Message: "Terjadi kesalahan internal server. Mohon coba beberapa saat lagi",
@@ -647,7 +558,6 @@ func GetSpecBA(c echo.Context) error {
 	getDoc, err := service.GetSpecBA(id)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			log.Print(err)
 			response := models.Response{
 				Code:    404,
 				Message: "Formulir berita acara tidak ditemukan!",
@@ -655,7 +565,6 @@ func GetSpecBA(c echo.Context) error {
 			}
 			return c.JSON(http.StatusNotFound, response)
 		} else {
-			log.Print(err)
 			return c.JSON(http.StatusInternalServerError, &models.Response{
 				Code:    500,
 				Message: "Terjadi kesalahan internal pada server. Mohon coba beberapa saat lagi!",
@@ -673,7 +582,6 @@ func GetSpecAllBA(c echo.Context) error {
 	formBAWithSignatories, err := service.GetSpecAllBA(id)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			log.Print(err)
 			response := models.Response{
 				Code:    404,
 				Message: "Formulir Berita Acara tidak ditemukan!",
@@ -681,7 +589,6 @@ func GetSpecAllBA(c echo.Context) error {
 			}
 			return c.JSON(http.StatusNotFound, response)
 		} else {
-			log.Print(err)
 			return c.JSON(http.StatusInternalServerError, &models.Response{
 				Code:    500,
 				Message: "Terjadi kesalahan internal pada server. Mohon coba beberapa saat lagi!",
@@ -690,11 +597,9 @@ func GetSpecAllBA(c echo.Context) error {
 		}
 	}
 
-	// Siapkan data respons
 	responseData := map[string]interface{}{
 		"form":        formBAWithSignatories.Form,
 		"signatories": formBAWithSignatories.Signatories,
-		// "signatories": formBAWithSignatories.Signatories,
 	}
 	return c.JSON(http.StatusOK, responseData)
 }
@@ -705,7 +610,6 @@ func GetSpecAllBAAssets(c echo.Context) error {
 	formBAWithSignatories, err := service.GetSpecAllBAAssets(id)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			log.Print(err)
 			response := models.Response{
 				Code:    404,
 				Message: "Formulir Berita Acara tidak ditemukan!",
@@ -713,7 +617,6 @@ func GetSpecAllBAAssets(c echo.Context) error {
 			}
 			return c.JSON(http.StatusNotFound, response)
 		} else {
-			log.Print(err)
 			return c.JSON(http.StatusInternalServerError, &models.Response{
 				Code:    500,
 				Message: "Terjadi kesalahan internal pada server. Mohon coba beberapa saat lagi!",
@@ -722,11 +625,9 @@ func GetSpecAllBAAssets(c echo.Context) error {
 		}
 	}
 
-	// Siapkan data respons
 	responseData := map[string]interface{}{
 		"form":        formBAWithSignatories.Form,
 		"signatories": formBAWithSignatories.Signatories,
-		// "signatories": formBAWithSignatories.Signatories,
 	}
 	return c.JSON(http.StatusOK, responseData)
 }
@@ -734,11 +635,9 @@ func GetSpecAllBAAssets(c echo.Context) error {
 func GetSpecAllAsset(c echo.Context) error {
 	id := c.Param("id")
 
-	// var getDA []models.FormsDAAll
 	assetWithPIC, err := service.GetSpecAllAsset(id)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			log.Print(err)
 			response := models.Response{
 				Code:    404,
 				Message: "Asset tidak ditemukan!",
@@ -746,7 +645,6 @@ func GetSpecAllAsset(c echo.Context) error {
 			}
 			return c.JSON(http.StatusNotFound, response)
 		} else {
-			log.Print(err)
 			return c.JSON(http.StatusInternalServerError, &models.Response{
 				Code:    500,
 				Message: "Terjadi kesalahan internal pada server. Mohon coba beberapa saat lagi!",
@@ -755,16 +653,13 @@ func GetSpecAllAsset(c echo.Context) error {
 		}
 	}
 
-	// Siapkan data respons
 	responseData := map[string]interface{}{
 		"asset": assetWithPIC.Asset,
 		"pic":   assetWithPIC.PIC,
-		// "signatories": assetWithPIC.Signatories,
 	}
 	return c.JSON(http.StatusOK, responseData)
 }
 
-// menampilkan form dari user/ milik dia sendiri
 func GetAllFormBAbyUserID(c echo.Context) error {
 	tokenString := c.Request().Header.Get("Authorization")
 	secretKey := "secretJwToken"
@@ -777,7 +672,6 @@ func GetAllFormBAbyUserID(c echo.Context) error {
 		})
 	}
 
-	// Periksa apakah tokenString mengandung "Bearer "
 	if !strings.HasPrefix(tokenString, "Bearer ") {
 		return c.JSON(http.StatusUnauthorized, map[string]interface{}{
 			"code":    401,
@@ -786,13 +680,10 @@ func GetAllFormBAbyUserID(c echo.Context) error {
 		})
 	}
 
-	// Hapus "Bearer " dari tokenString
 	tokenOnly := strings.TrimPrefix(tokenString, "Bearer ")
 
-	//dekripsi token JWE
 	decrypted, err := DecryptJWE(tokenOnly, secretKey)
 	if err != nil {
-		fmt.Println("Gagal mendekripsi token:", err)
 		return c.JSON(http.StatusUnauthorized, map[string]interface{}{
 			"code":    401,
 			"message": "Token tidak valid!",
@@ -803,7 +694,6 @@ func GetAllFormBAbyUserID(c echo.Context) error {
 	var claims JwtCustomClaims
 	errJ := json.Unmarshal([]byte(decrypted), &claims)
 	if errJ != nil {
-		fmt.Println("Gagal mengurai klaim:", errJ)
 		return c.JSON(http.StatusUnauthorized, map[string]interface{}{
 			"code":    401,
 			"message": "Token tidak valid!",
@@ -811,13 +701,9 @@ func GetAllFormBAbyUserID(c echo.Context) error {
 		})
 	}
 	userID := c.Get("user_id").(int)
-	roleCode := c.Get("role_code").(string)
 
-	fmt.Println("User ID :", userID)
-	fmt.Println("Role code", roleCode)
 	form, err := service.GetAllBAbyUserID(userID)
 	if err != nil {
-		log.Print(err)
 		response := models.Response{
 			Code:    500,
 			Message: "Terjadi kesalahan internal server. Mohon coba beberapa saat lagi",
@@ -829,7 +715,6 @@ func GetAllFormBAbyUserID(c echo.Context) error {
 
 }
 
-// menampilkan form itcm admin
 func GetAllFormBAAdmin(c echo.Context) error {
 	tokenString := c.Request().Header.Get("Authorization")
 	secretKey := "secretJwToken"
@@ -842,7 +727,6 @@ func GetAllFormBAAdmin(c echo.Context) error {
 		})
 	}
 
-	// Periksa apakah tokenString mengandung "Bearer "
 	if !strings.HasPrefix(tokenString, "Bearer ") {
 		return c.JSON(http.StatusUnauthorized, map[string]interface{}{
 			"code":    401,
@@ -851,13 +735,10 @@ func GetAllFormBAAdmin(c echo.Context) error {
 		})
 	}
 
-	// Hapus "Bearer " dari tokenString
 	tokenOnly := strings.TrimPrefix(tokenString, "Bearer ")
 
-	//dekripsi token JWE
 	decrypted, err := DecryptJWE(tokenOnly, secretKey)
 	if err != nil {
-		fmt.Println("Gagal mendekripsi token:", err)
 		return c.JSON(http.StatusUnauthorized, map[string]interface{}{
 			"code":    401,
 			"message": "Token tidak valid!",
@@ -868,21 +749,15 @@ func GetAllFormBAAdmin(c echo.Context) error {
 	var claims JwtCustomClaims
 	errJ := json.Unmarshal([]byte(decrypted), &claims)
 	if errJ != nil {
-		fmt.Println("Gagal mengurai klaim:", errJ)
 		return c.JSON(http.StatusUnauthorized, map[string]interface{}{
 			"code":    401,
 			"message": "Token tidak valid!",
 			"status":  false,
 		})
 	}
-	userID := c.Get("user_id").(int)
-	roleCode := c.Get("role_code").(string)
 
-	fmt.Println("User ID :", userID)
-	fmt.Println("Role code", roleCode)
 	form, err := service.GetAllBAbyAdmin()
 	if err != nil {
-		log.Print(err)
 		response := models.Response{
 			Code:    500,
 			Message: "Terjadi kesalahan internal server. Mohon coba beberapa saat lagi",
@@ -895,10 +770,8 @@ func GetAllFormBAAdmin(c echo.Context) error {
 }
 
 func UpdateFormBA(c echo.Context) error {
-	log.Println("=== [START] UpdateFormBA Function ===")
 
 	id := c.Param("id")
-	log.Println("Received request to update form with ID:", id)
 
 	var updateFormRequest struct {
 		IsPublished bool               `json:"isPublished"`
@@ -907,23 +780,18 @@ func UpdateFormBA(c echo.Context) error {
 		BA          models.BA          `json:"data_ba"`
 	}
 
-	// Binding request body
 	if err := c.Bind(&updateFormRequest); err != nil {
-		log.Println("Error binding request data:", err)
 		return c.JSON(http.StatusBadRequest, &models.Response{
 			Code:    400,
 			Message: "Data tidak valid!",
 			Status:  false,
 		})
 	}
-	log.Println("Successfully bound request data")
 
-	// Ambil token dari header
 	tokenString := c.Request().Header.Get("Authorization")
 	secretKey := "secretJwToken"
 
 	if tokenString == "" {
-		log.Println("Authorization token not found")
 		return c.JSON(http.StatusUnauthorized, map[string]interface{}{
 			"code":    401,
 			"message": "Token tidak ditemukan!",
@@ -931,9 +799,7 @@ func UpdateFormBA(c echo.Context) error {
 		})
 	}
 
-	// Validasi format token
 	if !strings.HasPrefix(tokenString, "Bearer ") {
-		log.Println("Invalid token format")
 		return c.JSON(http.StatusUnauthorized, map[string]interface{}{
 			"code":    401,
 			"message": "Token tidak valid!",
@@ -942,41 +808,32 @@ func UpdateFormBA(c echo.Context) error {
 	}
 
 	tokenOnly := strings.TrimPrefix(tokenString, "Bearer ")
-	log.Println("Extracted token:", tokenOnly)
 
-	// Dekripsi token JWE
 	decrypted, err := DecryptJWE(tokenOnly, secretKey)
 	if err != nil {
-		log.Println("Failed to decrypt token:", err)
 		return c.JSON(http.StatusUnauthorized, map[string]interface{}{
 			"code":    401,
 			"message": "Token tidak valid!",
 			"status":  false,
 		})
 	}
-	log.Println("Successfully decrypted token")
 
-	// Unmarshal claims dari token
 	var claims JwtCustomClaims
 	errJ := json.Unmarshal([]byte(decrypted), &claims)
 	if errJ != nil {
-		log.Println("Failed to unmarshal claims:", errJ)
 		return c.JSON(http.StatusUnauthorized, map[string]interface{}{
 			"code":    401,
 			"message": "Token tidak valid!",
 			"status":  false,
 		})
 	}
-	log.Println("Successfully parsed token claims")
 
-	// Ambil user_id dan user_name dari context
 	var userID int
 	var userName string
 
 	if claims, ok := c.Get("user_id").(int); ok {
 		userID = claims
 	} else {
-		log.Println("Failed to convert user_id to int")
 		return c.JSON(http.StatusBadRequest, &models.Response{
 			Code:    400,
 			Message: "Data tidak valid!",
@@ -987,7 +844,6 @@ func UpdateFormBA(c echo.Context) error {
 	if name, ok := c.Get("user_name").(string); ok {
 		userName = name
 	} else {
-		log.Println("Failed to convert user_name to string")
 		return c.JSON(http.StatusBadRequest, &models.Response{
 			Code:    400,
 			Message: "Data tidak valid!",
@@ -995,10 +851,7 @@ func UpdateFormBA(c echo.Context) error {
 		})
 	}
 
-	// Set userID dan updated_by di FormData
 	updateFormRequest.FormData.UserID = userID
-	log.Println("User ID set to:", userID)
-	log.Println("User Name set to:", userName)
 
 	var updatedBy sql.NullString
 	if userName != "" {
@@ -1010,14 +863,8 @@ func UpdateFormBA(c echo.Context) error {
 
 	updateFormRequest.FormData.Updated_by = updatedBy
 
-	// Debugging Token
-	log.Println("Decrypted Token:", decrypted)
-	log.Println("User ID:", userID)
-	log.Println("User Name:", userName)
 
-	// Validasi token
 	if userID == 0 && userName == "" {
-		log.Println("Invalid token or token not found")
 		return c.JSON(http.StatusUnauthorized, map[string]interface{}{
 			"code":    401,
 			"message": "Invalid token atau token tidak ditemukan!",
@@ -1025,10 +872,8 @@ func UpdateFormBA(c echo.Context) error {
 		})
 	}
 
-	// Validasi FormTicket tidak boleh dimulai dengan spasi
 	whitespace := regexp.MustCompile(`^\s`)
 	if whitespace.MatchString(updateFormRequest.FormData.FormTicket) {
-		log.Println("Validation failed: Form ticket starts with whitespace")
 		return c.JSON(http.StatusUnprocessableEntity, &models.Response{
 			Code:    422,
 			Message: "Ticket tidak boleh dimulai dengan spasi!",
@@ -1036,9 +881,7 @@ func UpdateFormBA(c echo.Context) error {
 		})
 	}
 
-	// Validasi data
 	if err := c.Validate(&updateFormRequest.FormData); err != nil {
-		log.Println("Validation failed: Form data is empty")
 		return c.JSON(http.StatusInternalServerError, &models.Response{
 			Code:    422,
 			Message: "Data tidak boleh kosong!",
@@ -1046,33 +889,18 @@ func UpdateFormBA(c echo.Context) error {
 		})
 	}
 
-	// Cek apakah form sebelumnya ada dan belum dipublish
-	log.Println("Fetching existing form with ID:", id)
 	previousContent, errGet := service.GetSpecBA(id)
 	if errGet != nil {
-		log.Println("Error fetching existing form:", errGet)
 		return c.JSON(http.StatusNotFound, &models.Response{
 			Code:    404,
 			Message: "Gagal mengupdate formulir. Formulir tidak ditemukan!",
 			Status:  false,
 		})
 	}
-	log.Println("Successfully fetched existing form", previousContent)
+	log.Println("previousContent", previousContent)
 
-	// if previousContent.FormStatus == "Published" {
-	// 	log.Println("Cannot update a published form")
-	// 	return c.JSON(http.StatusBadRequest, &models.Response{
-	// 		Code:    400,
-	// 		Message: "Tidak dapat memperbarui dokumen yang sudah dipublish",
-	// 		Status:  false,
-	// 	})
-	// }
-
-	// Proses update form
-	log.Println("Updating form in database...")
 	_, errService := service.UpdateBA(updateFormRequest.FormData, updateFormRequest.BA, userName, userID, updateFormRequest.IsPublished, id, updateFormRequest.Signatory)
 	if errService != nil {
-		log.Println("Error during form update:", errService)
 		if errService.Error() == "You are not authorized to update this form" {
 			return c.JSON(http.StatusUnauthorized, map[string]interface{}{
 				"code":    401,
@@ -1087,9 +915,7 @@ func UpdateFormBA(c echo.Context) error {
 			})
 		}
 	}
-	log.Println("Successfully updated form")
 
-	log.Println("=== [END] UpdateFormBA Function ===")
 	return c.JSON(http.StatusOK, &models.Response{
 		Code:    200,
 		Message: "Formulir Berita Acara berhasil diperbarui!",
@@ -1107,7 +933,6 @@ func UpdateBeritaAcara(c echo.Context) error {
 		BA          models.BA          `json:"data_ba"`
 	}
 	if err := c.Bind(&updateFormRequest); err != nil {
-		log.Print("error saat binding:", err)
 		return c.JSON(http.StatusBadRequest, &models.Response{
 			Code:    400,
 			Message: "Data tidak valid!",
@@ -1136,10 +961,8 @@ func UpdateBeritaAcara(c echo.Context) error {
 
 	tokenOnly := strings.TrimPrefix(tokenString, "Bearer ")
 
-	//dekripsi token JWE
 	decrypted, err := DecryptJWE(tokenOnly, secretKey)
 	if err != nil {
-		fmt.Println("Gagal mendekripsi token:", err)
 		return c.JSON(http.StatusUnauthorized, map[string]interface{}{
 			"code":    401,
 			"message": "Token tidak valid!",
@@ -1150,7 +973,6 @@ func UpdateBeritaAcara(c echo.Context) error {
 	var claims JwtCustomClaims
 	errJ := json.Unmarshal([]byte(decrypted), &claims)
 	if errJ != nil {
-		fmt.Println("Gagal mengurai klaim:", errJ)
 		return c.JSON(http.StatusUnauthorized, map[string]interface{}{
 			"code":    401,
 			"message": "Token tidak valid!",
@@ -1162,8 +984,6 @@ func UpdateBeritaAcara(c echo.Context) error {
 	if claims, ok := c.Get("user_id").(int); ok {
 		userID = claims
 	} else {
-		// Jika gagal mengonversi ke int, tangani kesalahan di sini
-		log.Println("Tidak dapat mengonversi user_id ke int")
 		return c.JSON(http.StatusBadRequest, &models.Response{
 			Code:    400,
 			Message: "Data tidak valid!",
@@ -1174,8 +994,6 @@ func UpdateBeritaAcara(c echo.Context) error {
 	if name, ok := c.Get("user_name").(string); ok {
 		userName = name
 	} else {
-		// Jika gagal mendapatkan nama pengguna, tangani kesalahan di sini
-		log.Println("Tidak dapat mengonversi user_name ke string")
 		return c.JSON(http.StatusBadRequest, &models.Response{
 			Code:    400,
 			Message: "Data tidak valid!",
@@ -1195,12 +1013,7 @@ func UpdateBeritaAcara(c echo.Context) error {
 
 	updateFormRequest.FormData.Updated_by = updatedBy
 
-	// Token yang sudah dideskripsi
-	fmt.Println("Token yang sudah dideskripsi:", decrypted)
-	fmt.Println("User ID:", userID)
-	fmt.Println("user name: ", userName)
 
-	// Lakukan validasi token
 	if userID == 0 && userName == "" {
 		return c.JSON(http.StatusUnauthorized, map[string]interface{}{
 			"code":    401,
@@ -1227,24 +1040,16 @@ func UpdateBeritaAcara(c echo.Context) error {
 
 	previousContent, errGet := service.GetSpecBA(id)
 	if errGet != nil {
-		log.Print(errGet)
 		return c.JSON(http.StatusNotFound, &models.Response{
 			Code:    404,
 			Message: "Gagal mengupdate formulir. Formulir tidak ditemukan!",
 			Status:  false,
 		})
 	}
-	// if previousContent.FormStatus == "Published" {
-	// 	return c.JSON(http.StatusBadRequest, &models.Response{
-	// 		Code:    400,
-	// 		Message: "Tidak dapat memperbarui dokumen yang sudah dipublish",
-	// 		Status:  false,
-	// 	})
-	// }
+	log.Println("previousContent", previousContent)
 
 	_, errService := service.UpdateBA(updateFormRequest.FormData, updateFormRequest.BA, userName, userID, updateFormRequest.IsPublished, id, updateFormRequest.Signatory)
 	if errService != nil {
-		log.Println("Kesalahan selama pembaruan:", errService)
 		if errService.Error() == "You are not authorized to update this form" {
 			return c.JSON(http.StatusUnauthorized, map[string]interface{}{
 				"code":    401,
@@ -1260,7 +1065,6 @@ func UpdateBeritaAcara(c echo.Context) error {
 		}
 	}
 
-	log.Println(previousContent)
 	return c.JSON(http.StatusOK, &models.Response{
 		Code:    200,
 		Message: "Formulir Berita Acara berhasil diperbarui!",
@@ -1273,7 +1077,6 @@ func UpdateAsset(c echo.Context) error {
 
 	var updateRequest models.UpdateImageRequest
 
-	// Bind JSON ke struct
 	if err := c.Bind(&updateRequest); err != nil {
 		c.Logger().Error("Error binding request:", err)
 		return c.JSON(http.StatusBadRequest, &models.Response{
@@ -1283,7 +1086,6 @@ func UpdateAsset(c echo.Context) error {
 		})
 	}
 
-	// Ambil token dari header Authorization
 	tokenString := c.Request().Header.Get("Authorization")
 	if tokenString == "" || !strings.HasPrefix(tokenString, "Bearer ") {
 		return c.JSON(http.StatusUnauthorized, &models.Response{
@@ -1306,7 +1108,6 @@ func UpdateAsset(c echo.Context) error {
 		})
 	}
 
-	// Parse token ke struct
 	var claims JwtCustomClaims
 	if err := json.Unmarshal([]byte(decrypted), &claims); err != nil {
 		c.Logger().Error("Gagal mengurai klaim token:", err)
@@ -1317,7 +1118,6 @@ func UpdateAsset(c echo.Context) error {
 		})
 	}
 
-	// Ambil user_id dan user_name dari context
 	userName := claims.UserName
 	if userName == "" {
 		return c.JSON(http.StatusUnauthorized, map[string]interface{}{
@@ -1327,7 +1127,6 @@ func UpdateAsset(c echo.Context) error {
 		})
 	}
 
-	// Validasi data asset
 	if err := c.Validate(&updateRequest.Asset); err != nil {
 		return c.JSON(http.StatusUnprocessableEntity, &models.Response{
 			Code:    422,
@@ -1336,7 +1135,6 @@ func UpdateAsset(c echo.Context) error {
 		})
 	}
 
-	// Cek apakah asset ada di database sebelum update
 	_, errGet := service.GetSpecAsset(id)
 	if errGet != nil {
 		c.Logger().Error("Asset tidak ditemukan:", errGet)
@@ -1357,7 +1155,6 @@ func UpdateAsset(c echo.Context) error {
 		}
 	}
 
-	// Proses update asset dan PIC
 	errService := service.UpdateAsset(id, userName, updateRequest, database.DB.DB)
 	if errService != nil {
 		c.Logger().Error("Kesalahan saat update:", errService)
@@ -1396,7 +1193,6 @@ func FormBAByDivision(c echo.Context) error {
 		})
 	}
 
-	// Periksa apakah tokenString mengandung "Bearer "
 	if !strings.HasPrefix(tokenString, "Bearer ") {
 		return c.JSON(http.StatusUnauthorized, map[string]interface{}{
 			"code":    401,
@@ -1405,13 +1201,10 @@ func FormBAByDivision(c echo.Context) error {
 		})
 	}
 
-	// Hapus "Bearer " dari tokenString
 	tokenOnly := strings.TrimPrefix(tokenString, "Bearer ")
 
-	//dekripsi token JWE
 	decrypted, err := DecryptJWE(tokenOnly, secretKey)
 	if err != nil {
-		fmt.Println("Gagal mendekripsi token:", err)
 		return c.JSON(http.StatusUnauthorized, map[string]interface{}{
 			"code":    401,
 			"message": "Token tidak valid!",
@@ -1422,7 +1215,6 @@ func FormBAByDivision(c echo.Context) error {
 	var claims JwtCustomClaims
 	errJ := json.Unmarshal([]byte(decrypted), &claims)
 	if errJ != nil {
-		fmt.Println("Gagal mengurai klaim:", errJ)
 		return c.JSON(http.StatusUnauthorized, map[string]interface{}{
 			"code":    401,
 			"message": "Token tidak valid!",
@@ -1438,12 +1230,11 @@ func FormBAByDivision(c echo.Context) error {
 			"status":  false,
 		})
 	}
-	fmt.Println("User ID :", userID)
+	log.Println("userID", userID)
 
 	c.Set("division_code", claims.DivisionCode)
 	divisionCode, ok := c.Get("division_code").(string)
 	if !ok {
-		// fmt.Println("Division Code is not set or invalid type")
 		return c.JSON(http.StatusUnauthorized, map[string]interface{}{
 			"code":    401,
 			"message": "Division Code tidak ditemukan!",
@@ -1451,12 +1242,10 @@ func FormBAByDivision(c echo.Context) error {
 		})
 	}
 
-	fmt.Println("Division Code :", divisionCode)
 
 	myform, err := service.FormBAByDivision(divisionCode)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			log.Print(err)
 			response := models.Response{
 				Code:    404,
 				Message: "Form tidak ditemukan!",
@@ -1464,7 +1253,6 @@ func FormBAByDivision(c echo.Context) error {
 			}
 			return c.JSON(http.StatusNotFound, response)
 		} else {
-			log.Print(err)
 			return c.JSON(http.StatusInternalServerError, &models.Response{
 				Code:    500,
 				Message: "Terjadi kesalahan internal pada server. Mohon coba beberapa saat lagi!",
@@ -1497,10 +1285,8 @@ func DeleteBeritaAcara(c echo.Context) error {
 
 	tokenOnly := strings.TrimPrefix(tokenString, "Bearer ")
 
-	//dekripsi token JWE
 	decrypted, err := DecryptJWE(tokenOnly, secretKey)
 	if err != nil {
-		fmt.Println("Gagal mendekripsi token:", err)
 		return c.JSON(http.StatusUnauthorized, map[string]interface{}{
 			"code":    401,
 			"message": "Token tidak valid!",
@@ -1511,7 +1297,6 @@ func DeleteBeritaAcara(c echo.Context) error {
 	var claims JwtCustomClaims
 	errJ := json.Unmarshal([]byte(decrypted), &claims)
 	if errJ != nil {
-		fmt.Println("Gagal mengurai klaim:", errJ)
 		return c.JSON(http.StatusUnauthorized, map[string]interface{}{
 			"code":    401,
 			"message": "Token tidak valid!",
@@ -1524,8 +1309,6 @@ func DeleteBeritaAcara(c echo.Context) error {
 	if name, ok := c.Get("user_name").(string); ok {
 		userName = name
 	} else {
-		// Jika gagal mendapatkan nama pengguna, tangani kesalahan di sini
-		log.Println("Tidak dapat mengonversi user_name ke string")
 		return c.JSON(http.StatusBadRequest, &models.Response{
 			Code:    400,
 			Message: "Data tidak valid!",
@@ -1533,10 +1316,8 @@ func DeleteBeritaAcara(c echo.Context) error {
 		})
 	}
 	id := c.Param("id")
-	fmt.Println("aidi contr", id)
 	perviousContent, errGet := service.GetSpecAllBAAssets(id)
 	if errGet != nil {
-		log.Print(errGet)
 		return c.JSON(http.StatusNotFound, &models.Response{
 			Code:    404,
 			Message: "Gagal menghapus BA. BA tidak ditemukan!",
@@ -1545,15 +1326,9 @@ func DeleteBeritaAcara(c echo.Context) error {
 	}
 
 	jenis := perviousContent.Form.BeritaAcara.Jenis
-	// picUUID :=
-	fmt.Println("jenis", jenis)
-
-	fmt.Println("Cikk", id)
-	fmt.Println("Cikk", userName)
 
 	errService := service.DeleteBeritaAcara(id, userName, jenis)
 	if errService != nil {
-		log.Println("Kesalahan selama pembaruan:", errService)
 		if errService.Error() == "You are not authorized to update this form" {
 			return c.JSON(http.StatusUnauthorized, map[string]interface{}{
 				"code":    401,
@@ -1569,7 +1344,6 @@ func DeleteBeritaAcara(c echo.Context) error {
 		}
 	}
 
-	log.Println(perviousContent)
 	return c.JSON(http.StatusOK, &models.Response{
 		Code:    200,
 		Message: "Formulir berhasil dihapus!",
@@ -1599,10 +1373,8 @@ func DeleteAsset(c echo.Context) error {
 
 	tokenOnly := strings.TrimPrefix(tokenString, "Bearer ")
 
-	//dekripsi token JWE
 	decrypted, err := DecryptJWE(tokenOnly, secretKey)
 	if err != nil {
-		fmt.Println("Gagal mendekripsi token:", err)
 		return c.JSON(http.StatusUnauthorized, map[string]interface{}{
 			"code":    401,
 			"message": "Token tidak valid!",
@@ -1613,7 +1385,6 @@ func DeleteAsset(c echo.Context) error {
 	var claims JwtCustomClaims
 	errJ := json.Unmarshal([]byte(decrypted), &claims)
 	if errJ != nil {
-		fmt.Println("Gagal mengurai klaim:", errJ)
 		return c.JSON(http.StatusUnauthorized, map[string]interface{}{
 			"code":    401,
 			"message": "Token tidak valid!",
@@ -1626,8 +1397,6 @@ func DeleteAsset(c echo.Context) error {
 	if name, ok := c.Get("user_name").(string); ok {
 		userName = name
 	} else {
-		// Jika gagal mendapatkan nama pengguna, tangani kesalahan di sini
-		log.Println("Tidak dapat mengonversi user_name ke string")
 		return c.JSON(http.StatusBadRequest, &models.Response{
 			Code:    400,
 			Message: "Data tidak valid!",
@@ -1635,20 +1404,18 @@ func DeleteAsset(c echo.Context) error {
 		})
 	}
 	id := c.Param("id")
-	fmt.Println("aidi contr", id)
 	perviousContent, errGet := service.GetSpecAsset(id)
 	if errGet != nil {
-		log.Print(errGet)
 		return c.JSON(http.StatusNotFound, &models.Response{
 			Code:    404,
 			Message: "Gagal menghapus asset. asset tidak ditemukan!",
 			Status:  false,
 		})
 	}
+	log.Println("previousContent", perviousContent)
 
 	errService := service.DeleteAsset(id, userName)
 	if errService != nil {
-		log.Println("Kesalahan selama pembaruan:", errService)
 		if errService.Error() == "You are not authorized to update this form" {
 			return c.JSON(http.StatusUnauthorized, map[string]interface{}{
 				"code":    401,
@@ -1664,7 +1431,6 @@ func DeleteAsset(c echo.Context) error {
 		}
 	}
 
-	log.Println(perviousContent)
 	return c.JSON(http.StatusOK, &models.Response{
 		Code:    200,
 		Message: "Formulir berhasil dihapus!",
@@ -1672,7 +1438,6 @@ func DeleteAsset(c echo.Context) error {
 	})
 }
 
-// menampilkan form dari user/ milik dia sendiri
 func SignatureUserBA(c echo.Context) error {
 	tokenString := c.Request().Header.Get("Authorization")
 	secretKey := "secretJwToken"
@@ -1685,7 +1450,6 @@ func SignatureUserBA(c echo.Context) error {
 		})
 	}
 
-	// Periksa apakah tokenString mengandung "Bearer "
 	if !strings.HasPrefix(tokenString, "Bearer ") {
 		return c.JSON(http.StatusUnauthorized, map[string]interface{}{
 			"code":    401,
@@ -1694,13 +1458,10 @@ func SignatureUserBA(c echo.Context) error {
 		})
 	}
 
-	// Hapus "Bearer " dari tokenString
 	tokenOnly := strings.TrimPrefix(tokenString, "Bearer ")
 
-	//dekripsi token JWE
 	decrypted, err := DecryptJWE(tokenOnly, secretKey)
 	if err != nil {
-		fmt.Println("Gagal mendekripsi token:", err)
 		return c.JSON(http.StatusUnauthorized, map[string]interface{}{
 			"code":    401,
 			"message": "Token tidak valid!",
@@ -1711,7 +1472,6 @@ func SignatureUserBA(c echo.Context) error {
 	var claims JwtCustomClaims
 	errJ := json.Unmarshal([]byte(decrypted), &claims)
 	if errJ != nil {
-		fmt.Println("Gagal mengurai klaim:", errJ)
 		return c.JSON(http.StatusUnauthorized, map[string]interface{}{
 			"code":    401,
 			"message": "Token tidak valid!",
@@ -1719,13 +1479,9 @@ func SignatureUserBA(c echo.Context) error {
 		})
 	}
 	userID := c.Get("user_id").(int)
-	roleCode := c.Get("role_code").(string)
 
-	fmt.Println("User ID :", userID)
-	fmt.Println("Role code", roleCode)
 	form, err := service.SignatureUserBA(userID)
 	if err != nil {
-		log.Print(err)
 		response := models.Response{
 			Code:    500,
 			Message: "Terjadi kesalahan internal server. Mohon coba beberapa saat lagi",
